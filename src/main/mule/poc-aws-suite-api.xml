@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sns="http://www.mulesoft.org/schema/mule/sns" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:s3="http://www.mulesoft.org/schema/mule/s3"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/current/mule-sns.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2f9daf74-154d-4e18-a145-e5acb194bccd" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<s3:config name="Amazon_S3_Configuration" doc:name="Amazon S3 Configuration" doc:id="6e1401da-ffc8-41f8-80c4-aeda2b06fec3" >
+		<s3:basic-connection accessKey='#["access"]' secretKey='#["secret"]'/>
+	</s3:config>
+	<sns:config name="Amazon_SNS_configuration" doc:name="Amazon SNS configuration" doc:id="777e72e3-ba98-4331-9c21-01cd69f8c2bb" defaultTopicArn="arn:aws:sns:ap-south-1:211556697089:MuleTestTopic-147">
+		<sns:basic-connection accessKey='#["accessKey"]' secretKey='#["secret"]' />
+	</sns:config>
+	<flow name="create-bucket-demoFlow" doc:id="19fb62b4-ee22-4b1b-806f-3fc5faf13df3" >
+		<http:listener doc:name="Listener" doc:id="3f250fbf-79c9-4a66-a8bd-887255400cce" config-ref="HTTP_Listener_config" path="/aws"/>
+		<s3:create-bucket doc:name="Create bucket" doc:id="ec5436ce-abfb-4618-a09b-6a92f3938326" config-ref="Amazon_S3_Configuration" bucketName="bucket-rose3" region="AP_SEOUL" acl="BUCKET_OWNER_FULL_CONTROL"/>
+		<ee:transform doc:name="Transform Message" doc:id="90bf0ffb-af4e-488a-a68e-986b74ef1439" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="create-object-demoFlow" doc:id="413dae0f-5e67-417b-96a0-645e8a61ec1e" >
+		<http:listener doc:name="Listener" doc:id="ecd4787e-cb68-46ee-8d57-74ca0b331469" config-ref="HTTP_Listener_config" path="/object"/>
+		<s3:create-object doc:name="Create object" doc:id="66fc98a7-49ff-478c-a0a0-5124b04d9078" config-ref="Amazon_S3_Configuration" bucketName="bucket-rose-jacob" key="JsonTestMsg" acl="PUBLIC_READ">
+		</s3:create-object>
+		<ee:transform doc:name="Transform Message" doc:id="de5e64a6-7287-4bfc-afa2-bbe3e14173a9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="new-objectFlow" doc:id="276197d7-eb95-48d2-a525-6ee7592584fd" >
+		<http:listener doc:name="Listener" doc:id="ccfe5971-21f4-4060-86f1-2fbf159e5d37" config-ref="HTTP_Listener_config" path="/get"/>
+		<s3:get-object doc:name="Get object" doc:id="82a226d1-c9aa-4999-814d-11029d0e7fa9" config-ref="Amazon_S3_Configuration" bucketName="bucket-rose2" key="JsonTestMessage"/>
+		<ee:transform doc:name="Transform Message" doc:id="3af1c6d7-eb96-4213-b724-b4df413865ec" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
